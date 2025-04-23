@@ -248,7 +248,6 @@ function handleReceivedImage(meta) {
     categoryId: meta.categoryId, // 保存类别 ID
   });
 
-  // 更新当前病人的分类数据（如果是当前检索的病人）
   if (currentPatientId.value === meta.patientId) {
     currentPatientCategories.value = patients.value[currentPatientId.value].categories;
   }
@@ -264,7 +263,6 @@ function fetchPatientImages() {
   currentPatientCategories.value = patients.value[currentPatientId.value]?.categories || {};
 }
 
-// 获取 MIME 类型（与后端逻辑一致）
 function getMimeType(filename) {
   const ext = filename.split('.').pop().toLowerCase();
   switch (ext) {
@@ -280,7 +278,6 @@ function getMimeType(filename) {
 }
 
 // 切换图片选择状态
-// 切换图片选择状态（修改选中数据结构）
 const toggleImageSelection = (image) => {
   const selectedImg = {
     url: image.url,
@@ -338,8 +335,6 @@ const submitData = () => {
   };
 
   console.log('提交的数据：', submission);
-  // 如需发送到后端，可使用 fetch 或 WebSocket
-  // fetch('/api/submit', { method: 'POST', body: JSON.stringify(submission) });
 };
 
 
