@@ -2,17 +2,44 @@
   <div class="app-container">
     <el-container>
       <el-main class="left-panel">
-        <el-card class="timer-card">
-          <template #header>
-            <div class="timer-header">
-              <el-icon><Clock /></el-icon>
-              <span>计时器</span>
-            </div>
-          </template>
-          <div class="timer-content">
-            <span class="time-display">{{ time }} S</span>
-          </div>
-        </el-card>
+
+        <el-row :gutter="20" class="top-cards">
+          <el-col :span="12">
+            <el-card class="patient-search-card">
+              <template #header>
+                <div class="patient-search-header">
+                  <el-icon><UserSearch /></el-icon>
+                  <span>病人 ID 检索</span>
+                </div>
+              </template>
+              <div class="patient-search-input">
+                <el-input
+                    v-model="currentPatientId"
+                    placeholder="输入病人 ID（如 patient_123）"
+                    class="input-with-button"
+                >
+                  <template #append>
+                    <el-button type="primary" @click="fetchPatientImages">检索</el-button>
+                  </template>
+                </el-input>
+              </div>
+            </el-card>
+          </el-col>
+
+          <el-col :span="12">
+            <el-card class="timer-card">
+              <template #header>
+                <div class="timer-header">
+                  <el-icon><Clock /></el-icon>
+                  <span>计时器</span>
+                </div>
+              </template>
+              <div class="timer-content">
+                <span class="time-display">{{ time }} S</span>
+              </div>
+            </el-card>
+          </el-col>
+        </el-row>
         <el-card class="selected-images-card">
           <template #header>
             <div class="selected-images-header">选中的图片</div>
@@ -22,7 +49,7 @@
               <img
                   v-for="(imgUrl, index) in selectedImages"
                   :key="index"
-                  :src="imgUrl"
+                  :src="imgUrl.url"
                   alt="选中图片"
                   class="big-image"
               />
@@ -58,25 +85,25 @@
         <el-radio-group v-model="selectedImageId" class="global-radio-group">
           <el-collapse v-model="activeNames">
             <el-collapse-item
-                v-for="category in categories"
-                :key="category.id"
-                :title="category.name"
-                :name="`category-${category.id}`"
+                v-for="(category, catId) in currentPatientCategories"
+                :key="catId"
+                :title="`类别 ${catId}`"
+                :name="`category-${catId}`"
                 :style="{ width: '100%' }"
             >
-            <div class="category-images-scroll">
-              <div class="category-images">
-                <ImageCheckboxSelector
-                    v-for="img in category.images"
-                    :key="img.id"
-                    :image="img"
-                    :selectedImages="selectedImages"
-                    @toggle-selection="toggleImageSelection"
-                    @clear-selection="handleClearSelection"
-                    class="category-image"
-                />
+              <div class="category-images-scroll">
+                <div class="category-images flex-container">
+                  <ImageCheckboxSelector
+                      v-for="img in category.images"
+                      :key="img.imageId"
+                      :image="img"
+                      :selectedImages="selectedImages"
+                      @toggle-selection="toggleImageSelection"
+                      @clear-selection="handleClearSelection"
+                      class="category-image flex-item"
+                  />
+                </div>
               </div>
-            </div>
             </el-collapse-item>
           </el-collapse>
         </el-radio-group>
@@ -95,6 +122,8 @@
         </el-card>
       </el-aside>
     </el-container>
+
+    <div v-if="wsStatus" class="ws-status">{{ wsStatus }}</div>
   </div>
 </template>
 
@@ -115,6 +144,17 @@ import {
 import ImageCheckboxSelector from '../components/ImageCheckboxSelector.vue';
 import 'element-plus/dist/index.css';
 
+import { onMounted, onUnmounted } from 'vue';
+
+// WebSocket 连接
+const ws = ref(null);
+const wsStatus = ref('');
+const currentPatientId = ref(''); // 当前检索的病人 ID
+
+// 病人数据结构：{ [patientId]: { categories: { [catId]: { images: [] } } }
+const patients = ref({});
+const currentPatientCategories = ref({}); // 当前病人的分类数据
+
 // 生成唯一图片ID（分类ID+序号）
 const generateUniqueId = (categoryId, index) => `${categoryId}-${index + 1}`;
 // 清除所有选中状态
@@ -130,100 +170,128 @@ const clearAllSelections = () => {
 const handleClearSelection = () => {
   selectedImages.value = [];
 };
-// 初始化数据（唯一ID+两列数据）
-const categories = ref([
-  {
-    id: 1,
-    name: 'label1',
-    images: [
-      { id: generateUniqueId(1, 0), url: 'https://picsum.photos/200/200?random=1' },
-      { id: generateUniqueId(1, 1), url: 'https://picsum.photos/200/200?random=2' },
-      { id: generateUniqueId(1, 2), url: 'https://picsum.photos/200/200?random=3' }
-    ]
-  },
-  {
-    id: 2,
-    name: 'label2',
-    images: [
-      { id: generateUniqueId(2, 0), url: 'https://picsum.photos/200/200?random=4' },
-      { id: generateUniqueId(2, 1), url: 'https://picsum.photos/200/200?random=5' },
-      { id: generateUniqueId(2, 2), url: 'https://picsum.photos/200/200?random=6' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'label3',
-    images: [
-      { id: generateUniqueId(3, 0), url: 'https://picsum.photos/200/200?random=7' },
-      { id: generateUniqueId(3, 1), url: 'https://picsum.photos/200/200?random=8' },
-      { id: generateUniqueId(3, 2), url: 'https://picsum.photos/200/200?random=9' }
-    ]
-  },
-  // 新增第4组
-  {
-    id: 4,
-    name: 'label4',
-    images: [
-      { id: generateUniqueId(4, 0), url: 'https://picsum.photos/200/200?random=10' },
-      { id: generateUniqueId(4, 1), url: 'https://picsum.photos/200/200?random=11' },
-      { id: generateUniqueId(4, 2), url: 'https://picsum.photos/200/200?random=12' }
-    ]
-  },
-  // 新增第5组
-  {
-    id: 5,
-    name: 'label5',
-    images: [
-      { id: generateUniqueId(5, 0), url: 'https://picsum.photos/200/200?random=13' },
-      { id: generateUniqueId(5, 1), url: 'https://picsum.photos/200/200?random=14' },
-      { id: generateUniqueId(5, 2), url: 'https://picsum.photos/200/200?random=15' }
-    ]
-  },
-  // 新增第6组
-  {
-    id: 6,
-    name: 'label6',
-    images: [
-      { id: generateUniqueId(6, 0), url: 'https://picsum.photos/200/200?random=16' },
-      { id: generateUniqueId(6, 1), url: 'https://picsum.photos/200/200?random=17' },
-      { id: generateUniqueId(6, 2), url: 'https://picsum.photos/200/200?random=18' }
-    ]
-  },
-  // 新增第7组
-  {
-    id: 7,
-    name: 'label7',
-    images: [
-      { id: generateUniqueId(7, 0), url: 'https://picsum.photos/200/200?random=19' },
-      { id: generateUniqueId(7, 1), url: 'https://picsum.photos/200/200?random=20' },
-      { id: generateUniqueId(7, 2), url: 'https://picsum.photos/200/200?random=21' },
-      { id: generateUniqueId(7, 3), url: 'https://picsum.photos/200/200?random=22' },
-      { id: generateUniqueId(7, 4), url: 'https://picsum.photos/200/200?random=23' },
-      { id: generateUniqueId(7, 5), url: 'https://picsum.photos/200/200?random=24' },
-      { id: generateUniqueId(7, 6), url: 'https://picsum.photos/200/200?random=25' },
-      { id: generateUniqueId(7, 7), url: 'https://picsum.photos/200/200?random=26' },
-      { id: generateUniqueId(7, 8), url: 'https://picsum.photos/200/200?random=27' },
-    ]
-  }
-]);
+
 const time = ref(0);
 const isRunning = ref(false);
 const selectedImages = ref([]);
-const textDescription = ref('');
+const textDescription = ref('检查所见：\n' +
+    '\n' +
+    '-食道：粘膜光滑柔软，血管纹理清晰，扩张度好，齿状线清晰。\n' +
+    '-贲门：未见异常。\n' +
+    '-胃底：黏液糊量中，清，粘膜光滑。\n' +
+    '-胃体：粘膜光滑，红白相间，蠕动可。\n' +
+    '-胃角：弧度存在，粘膜光滑柔软，蠕动可。\n' +
+    '-胃窦：粘膜光滑，红白相间，散见充血斑。\n' +
+    '-幽门：可见，呈圆形，开闭自如，粘膜光滑柔软。\n' +
+    '-十二指肠：球部变形，前壁可见一枚溃疡面，大小约0.8×1.0cm，表面覆白苔，基底少许血痂，周围粘膜充血水肿，降部未见异常。\n' +
+    '\n' +
+    '诊断结论：1.慢性非萎缩性胃炎，2.十二指肠球部溃疡（活动期）');
 const activeNames = ref([]);
 const selectedImageId = ref(null);
 let timer = null;
 
+// 初始化 WebSocket 连接
+onMounted(() => {
+  initWebSocket();
+});
+
+onUnmounted(() => {
+  if (ws.value) {
+    ws.value.close();
+  }
+});
+
+// 初始化 WebSocket
+function initWebSocket() {
+  ws.value = new WebSocket('ws://localhost:8080/ws');
+  ws.value.onopen = () => {
+    wsStatus.value = 'WebSocket 连接已建立';
+  };
+  ws.value.onmessage = (event) => {
+    try {
+      const imgMeta = JSON.parse(event.data);
+      handleReceivedImage(imgMeta);
+    } catch (error) {
+      wsStatus.value = `数据解析失败: ${error.message}`;
+    }
+  };
+  ws.value.onerror = (error) => {
+    wsStatus.value = `WebSocket 错误: ${error.message}`;
+  };
+  ws.value.onclose = () => {
+    wsStatus.value = 'WebSocket 连接已断开';
+    setTimeout(() => initWebSocket(), 5000); // 自动重连
+  };
+}
+
+// 处理接收到的图片元数据
+function handleReceivedImage(meta) {
+  // 初始化病人数据结构
+  if (!patients.value[meta.patientId]) {
+    patients.value[meta.patientId] = { categories: {} };
+  }
+  // 初始化类别数据结构
+  if (!patients.value[meta.patientId].categories[meta.categoryId]) {
+    patients.value[meta.patientId].categories[meta.categoryId] = {
+      id: meta.categoryId,
+      name: `类别 ${meta.categoryId}`,
+      images: [],
+    };
+  }
+  // 添加图片到对应类别
+  patients.value[meta.patientId].categories[meta.categoryId].images.push({
+    imageId: meta.imageId,
+    url: `data:image/${getMimeType(meta.fileName)};base64,${meta.imageData}`,
+    fileName: meta.fileName,
+    patientId: meta.patientId, // 保存病人 ID
+    categoryId: meta.categoryId, // 保存类别 ID
+  });
+
+  if (currentPatientId.value === meta.patientId) {
+    currentPatientCategories.value = patients.value[currentPatientId.value].categories;
+  }
+}
+
+// 检索病人图片
+function fetchPatientImages() {
+  if (!currentPatientId.value) {
+    ElMessageBox.warning('请输入病人 ID');
+    return;
+  }
+  ws.value.send(currentPatientId.value); // 发送病人 ID 请求
+  currentPatientCategories.value = patients.value[currentPatientId.value]?.categories || {};
+}
+
+function getMimeType(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  switch (ext) {
+    case 'jpg', 'jpeg':
+      return 'jpeg';
+    case 'png':
+      return 'png';
+    case 'gif':
+      return 'gif';
+    default:
+      return 'image';
+  }
+}
+
 // 切换图片选择状态
 const toggleImageSelection = (image) => {
-  const index = selectedImages.value.findIndex((imgUrl) => imgUrl === image.url);
+  const selectedImg = {
+    url: image.url,
+    patientId: image.patientId,
+    categoryId: image.categoryId,
+    imageId: image.imageId,
+  };
+
+  const index = selectedImages.value.findIndex((img) => img.url === selectedImg.url);
   if (index > -1) {
     selectedImages.value.splice(index, 1);
   } else {
-    selectedImages.value.push(image.url);
+    selectedImages.value.push(selectedImg);
   }
 };
-
 // 处理文件上传（生成唯一ID）
 const handleFileUpload = (file) => {
   const categoryId = categories.value[0].id; // 默认上传到第一个分类
@@ -253,12 +321,26 @@ const pauseTimer = () => {
 };
 
 // 提交数据
+// 提交数据（包含病人 ID、图片类别、文本描述）
 const submitData = () => {
-  console.log('提交的数据：', {
-    selectedImages: selectedImages.value,
-    textDescription: textDescription.value
+  const submission = {
+    textDescription: textDescription.value,
+    images: selectedImages.value.map((img) => ({
+      url: img.url,
+      patientId: img.patientId,
+      categoryId: img.categoryId,
+      imageId: img.imageId, // 可选：如需唯一标识
+    })),
+  };
+
+  console.log('提交的数据：', submission);
+
+  ws.value.send(JSON.stringify(submission));
+  ElMessageBox.alert('数据已提交', '操作完成', {
+    type: 'success'
   });
 };
+
 
 
 
