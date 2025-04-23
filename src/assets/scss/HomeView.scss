@@ -228,3 +228,70 @@
         width: calc((100% - 10px) / 2); /* 2 列 */
     }
 }
+
+.patient-search-card {
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.patient-search-input {
+    padding: 15px;
+}
+
+.input-with-button {
+    width: 100%;
+}
+
+/* 分类图片滚动区域 */
+.category-images-scroll {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.category-images {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 15px;
+}
+
+/* WebSocket 状态提示 */
+.ws-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    z-index: 9999;
+}
+
+     /* Flex 容器样式 */
+ .flex-container {
+     display: flex;
+     flex-wrap: wrap; /* 允许换行 */
+     gap: 15px; /* 图片间距 */
+     padding: 15px; /* 内边距 */
+ }
+
+/* 单个图片项样式 */
+.flex-item {
+    /* 每行显示 4 列，可根据屏幕尺寸调整 */
+    flex-basis: calc(25% - 15px); /* (100% / 4) - gap */
+    min-width: 200px; /* 最小宽度防止挤压 */
+    height: 200px; /* 固定高度 */
+}
+
+/* 响应式调整列数 */
+@media (max-width: 1200px) { /* 大屏 */
+    .flex-item {
+        flex-basis: calc(33.33% - 15px); /* 3 列 */
+    }
+}
+
+@media (max-width: 768px) { /* 小屏 */
+    .flex-item {
+        flex-basis: calc(50% - 15px); /* 2 列 */
+    }
+}
