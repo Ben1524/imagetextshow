@@ -49,7 +49,7 @@
               <img
                   v-for="(imgUrl, index) in selectedImages"
                   :key="index"
-                  :src="imgUrl"
+                  :src="imgUrl.url"
                   alt="选中图片"
                   class="big-image"
               />
@@ -92,7 +92,6 @@
                 :style="{ width: '100%' }"
             >
               <div class="category-images-scroll">
-                <!-- 使用 Flex 布局实现多行排列 -->
                 <div class="category-images flex-container">
                   <ImageCheckboxSelector
                       v-for="img in category.images"
@@ -335,6 +334,11 @@ const submitData = () => {
   };
 
   console.log('提交的数据：', submission);
+
+  ws.value.send(JSON.stringify(submission));
+  ElMessageBox.alert('数据已提交', '操作完成', {
+    type: 'success'
+  });
 };
 
 
