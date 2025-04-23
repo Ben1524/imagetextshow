@@ -1,0 +1,230 @@
+
+.app-container {
+    display: flex;
+    gap: 30px;
+    padding: 20px;
+}
+
+.left-panel {
+    width: 40%;
+    min-width: 400px; /* 防止左侧内容过窄 */
+}
+
+.right-panel {
+    flex: 1; /* 右侧自适应填充剩余空间 */
+    max-width: 800px; /* 限制最大宽度 */
+}
+
+.image-grid {
+    margin: 0 -12px; /* 配合gutter值抵消内边距 */
+}
+
+.image-col {
+    padding: 5px 12px; /* 配合gutter值实现对称间距 */
+    min-width: 150px; /* 设置最小宽度 */
+}
+
+.big-image {
+    height: 150px; /* 缩小图片高度 */
+    width: auto;
+    object-fit: cover;
+    margin: 5px;
+}
+
+.selected-images-scroll {
+    min-height: 300px; /* 设置最大高度 */
+    overflow-y: auto; /* 添加垂直滚动条 */
+    border: 1px solid #ccc; /* 可选：添加边框 */
+    padding: 5px;
+}
+
+.selected-images {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 200px; /* 设置最大高度 */
+}
+
+.app-container {
+    gap: 20px; /* 适当缩小整体间距 */
+}
+
+.left-panel {
+    width: 40%;
+    min-width: 350px;
+}
+
+.selected-images-scroll {
+    max-height: 400px; /* 增大滚动区域高度 */
+    border: none; /* 移除边框，使布局更简洁 */
+    padding: 0;
+    overflow-x: auto; /* 增加水平滚动（可选） */
+}
+
+.selected-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* 统一图片间距 */
+    padding: 10px; /* 内边距适配滚动条 */
+
+    /* 关键：自动计算图片尺寸以铺满容器 */
+    --image-width: calc((100% - 30px) / 3); /* 3列布局，间距10px */
+}
+
+
+
+.big-image {
+    /* 使用 CSS 变量控制尺寸 */
+    width: auto;
+    height: 180px;
+    object-fit: cover;
+    margin: 5px;
+    border-radius: 8px; /* 圆角优化 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 轻微阴影 */
+    transition: transform 0.3s ease; /* 选中动画 */
+
+    /* 鼠标悬停效果 */
+    &:hover {
+        transform: scale(1.02);
+    }
+}
+
+/* 小屏幕适配：自动切换为2列布局 */
+@media (max-width: 768px) {
+    .selected-images
+    {
+        --image-width: calc((100% - 20px) / 2);
+    }
+}
+
+.app-container {
+    display: flex;
+    gap: 30px;
+    padding: 20px;
+}
+
+.left-panel {
+    width: 40%;
+    min-width: 400px; /* 防止左侧内容过窄 */
+}
+
+.right-panel {
+    flex: 1; /* 右侧自适应填充剩余空间 */
+    max-width: 800px; /* 限制最大宽度 */
+}
+
+
+
+
+
+.timer-card,
+.selected-images-card,
+.buttons-card,
+.text-area-card,
+.upload-card {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.timer-header,
+.selected-images-header,
+.buttons-header,
+.text-area-header,
+.upload-header {
+    font-weight: bold;
+}
+
+.text-area{
+    min-height: 60px;
+}
+
+.selected-opt-card{
+
+    margin-top: 10px;
+}
+
+.timer-card {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background-color: #f8f9fa;
+    transition: transform 0.3s ease;
+}
+
+.timer-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+
+.timer-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #4a4a4a;
+}
+
+.timer-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    //padding: 30px 20px;
+    flex-grow: 1;
+}
+
+.time-display {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2196f3;
+    background: linear-gradient(to right, #409eff, #2196f3);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    transition: all 0.3s ease;
+}
+
+/* 动画效果：时间变化时的渐变动画 */
+.time-display {
+    will-change: transform;
+}
+
+.time-display:not(:last-child) {
+    margin-right: 4px;
+}
+
+.category-images-scroll {
+    max-height: 400px;
+    overflow-x: hidden; /* 移除水平滚动，避免宽度压缩 */
+    overflow-y: auto; /* 仅垂直滚动 */
+}
+
+.category-images {
+    display: flex;
+    flex-wrap: wrap; /* 允许换行 */
+    gap: 15px; /* 增大间距 */
+    padding: 15px; /* 内边距 */
+    width: 100%; /* 撑满父容器宽度 */
+}
+
+.category-image {
+    width: calc((100% - 30px) / 4); /* 关键：根据列数动态计算 */
+    height:auto;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    flex-shrink: 0; /* 禁止压缩 */
+}
+
+/* 响应式调整列数 */
+@media (max-width: 1200px) { /* 大屏（lg） */
+    .category-image {
+        width: calc((100% - 20px) / 3); /* 3 列 */
+    }
+}
+
+@media (max-width: 768px) { /* 小屏（sm） */
+    .category-image {
+        width: calc((100% - 10px) / 2); /* 2 列 */
+    }
+}
