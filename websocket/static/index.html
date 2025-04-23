@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>病人图片管理</title>
+    <style>
+        .patient-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px;
+            width: 250px;
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            margin: 12px 0;
+            border-radius: 4px;
+        }
+
+        .metadata {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            margin: 10px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+<input type="text" id="patientIdInput" placeholder="输入病人 ID">
+<button onclick="requestPatientImages()">请求图片</button>
+<div class="container" id="imageContainer"></div>
+
+<script>
+    const ws = new WebSocket('ws://localhost:8080/ws');
+    const container = document.getElementById('imageContainer');
+
+    ws.onmessage = (event) => {
+        try {
+            const metadata = JSON.parse(event.data);
+            // 创建病人图片卡片
+            const card = document.createElement('div');
+            card.className = 'patient-card';
+            card.innerHTML = `
+                    <h3>病人 ID: ${metadata.patientId}</h3>
+                    <img src="data:image/${getMimeType(metadata.fileName)};base64,${metadata.imageData}" class="image-preview">
+                    <div class="metadata">
+                        图片 ID: ${metadata.imageId}<br>
+                        文件名: ${metadata.fileName}
+                    </div>
+                `;
+            container.appendChild(card);
+        } catch (error) {
+            console.error('数据解析失败:', error, event.data);
+        }
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket 错误:', error);
+    };
+
+    function requestPatientImages() {
+        const patientId = document.getElementById('patientIdInput').value;
+        if (patientId) {
+            ws.send(patientId);
+        }
+    }
+
+    // 获取 MIME 类型
+    function getMimeType(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        switch (ext) {
+            case 'jpg', 'jpeg': return 'jpeg';
+            case 'png': return 'png';
+            case 'gif': return 'gif';
+            default: return 'octet-stream';
+        }
+    }
+</script>
+</body>
+
+</html>
